@@ -1,0 +1,741 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f6f2">
+  <title>PagePace — Your personal book tracker</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #242923;
+      --muted: #74796f;
+      --line: #e9e8e1;
+      --paper: #fffefa;
+      --canvas: #f7f6f2;
+      --green: #315b45;
+      --green-dark: #244735;
+      --green-soft: #e8efe9;
+      --coral: #bd604c;
+      --shadow: 0 18px 50px rgb(41 48 38 / 7%);
+      font-family: "Segoe UI", "Helvetica Neue", sans-serif;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      min-width: 320px;
+      min-height: 100vh;
+      margin: 0;
+      color: var(--ink);
+      background:
+        radial-gradient(ellipse at 8% 0%, rgb(226 235 222 / 50%), transparent 28rem),
+        var(--canvas);
+    }
+
+    button, input, select { font: inherit; }
+    button, select { cursor: pointer; }
+
+    .page-shell {
+      width: min(1120px, calc(100% - 48px));
+      margin: 0 auto;
+      padding: 34px 0 64px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 54px;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      gap: 11px;
+      color: var(--ink);
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 19px;
+      font-weight: 700;
+      letter-spacing: -.04em;
+      text-decoration: none;
+    }
+
+    .brand-mark {
+      display: grid;
+      width: 34px;
+      height: 34px;
+      place-items: center;
+      border-radius: 11px;
+      color: white;
+      background: var(--green);
+    }
+
+    .top-note {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .intro { margin-bottom: 34px; }
+
+    .eyebrow {
+      margin: 0 0 10px;
+      color: var(--green);
+      font-size: 11px;
+      font-weight: 750;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(38px, 6vw, 57px);
+      font-weight: 500;
+      letter-spacing: -.055em;
+      line-height: 1.08;
+    }
+
+    .subtitle {
+      margin: 14px 0 0;
+      color: var(--muted);
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    .dashboard {
+      display: grid;
+      grid-template-columns: minmax(270px, 340px) minmax(0, 1fr);
+      align-items: start;
+      gap: 30px;
+    }
+
+    .panel {
+      border: 1px solid rgb(233 232 225 / 85%);
+      border-radius: 18px;
+      background: var(--paper);
+      box-shadow: var(--shadow);
+    }
+
+    .add-panel { padding: 25px; }
+
+    .panel-heading {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin: 0 0 22px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 20px;
+      font-weight: 600;
+      letter-spacing: -.025em;
+    }
+
+    .heading-icon {
+      display: grid;
+      width: 29px;
+      height: 29px;
+      place-items: center;
+      border-radius: 9px;
+      color: var(--green);
+      background: var(--green-soft);
+    }
+
+    .field { margin-bottom: 17px; }
+
+    .field label {
+      display: block;
+      margin-bottom: 7px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .field input, .field select, .search-box input {
+      width: 100%;
+      border: 1px solid #e4e3dc;
+      border-radius: 9px;
+      outline: none;
+      color: var(--ink);
+      background: #fff;
+      transition: border-color .18s, box-shadow .18s;
+    }
+
+    .field input, .field select {
+      height: 43px;
+      padding: 0 12px;
+      font-size: 13px;
+    }
+
+    .field input::placeholder, .search-box input::placeholder { color: #a0a39b; }
+
+    .field input:focus, .field select:focus, .search-box input:focus {
+      border-color: #73917c;
+      box-shadow: 0 0 0 3px rgb(91 133 105 / 13%);
+    }
+
+    .field input[aria-invalid="true"] { border-color: var(--coral); }
+
+    .error {
+      min-height: 17px;
+      margin: 5px 0 -4px;
+      color: #a73e32;
+      font-size: 12px;
+    }
+
+    .add-button {
+      display: flex;
+      width: 100%;
+      height: 45px;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-top: 3px;
+      border: 0;
+      border-radius: 10px;
+      color: white;
+      background: var(--green);
+      font-size: 13px;
+      font-weight: 700;
+      transition: background .18s, transform .18s;
+    }
+
+    .add-button:hover { background: var(--green-dark); }
+    .add-button:active { transform: translateY(1px); }
+
+    .library { min-width: 0; }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 22px;
+    }
+
+    .stat {
+      min-height: 76px;
+      padding: 15px 17px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: rgb(255 254 250 / 80%);
+    }
+
+    .stat-value {
+      display: block;
+      margin-bottom: 4px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 24px;
+      line-height: 1;
+    }
+
+    .stat-label {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 650;
+    }
+
+    .list-toolbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      margin: 0 0 14px;
+    }
+
+    .list-heading {
+      margin: 0;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 21px;
+      font-weight: 600;
+      letter-spacing: -.03em;
+    }
+
+    .search-box {
+      position: relative;
+      width: min(230px, 55%);
+    }
+
+    .search-box svg {
+      position: absolute;
+      top: 50%;
+      left: 11px;
+      color: #858a80;
+      pointer-events: none;
+      transform: translateY(-50%);
+    }
+
+    .search-box input {
+      height: 38px;
+      padding: 0 12px 0 35px;
+      font-size: 12px;
+    }
+
+    .book-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .book-card {
+      display: flex;
+      min-width: 0;
+      align-items: center;
+      gap: 15px;
+      padding: 15px 16px;
+      border: 1px solid var(--line);
+      border-radius: 13px;
+      background: var(--paper);
+      transition: border-color .18s, transform .18s, box-shadow .18s;
+      animation: arrive .22s ease-out both;
+    }
+
+    .book-card:hover {
+      border-color: #d9dfd6;
+      box-shadow: 0 8px 24px rgb(41 48 38 / 5%);
+      transform: translateY(-1px);
+    }
+
+    .book-cover {
+      display: grid;
+      width: 43px;
+      height: 54px;
+      flex: 0 0 auto;
+      place-items: center;
+      border-radius: 5px 8px 8px 5px;
+      color: #fff;
+      background: var(--cover, #657d67);
+      box-shadow: inset 4px 0 rgb(0 0 0 / 10%), 2px 3px 6px rgb(35 45 35 / 12%);
+    }
+
+    .book-cover svg { width: 19px; height: 19px; opacity: .9; }
+
+    .book-info { min-width: 0; flex: 1; }
+
+    .book-title {
+      overflow: hidden;
+      margin: 0 0 5px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 16px;
+      font-weight: 600;
+      letter-spacing: -.02em;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .book-author {
+      overflow: hidden;
+      margin: 0;
+      color: var(--muted);
+      font-size: 12px;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .book-actions {
+      display: flex;
+      flex: 0 0 auto;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-select {
+      max-width: 116px;
+      height: 32px;
+      padding: 0 25px 0 9px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: #475249;
+      background: #f8f9f6;
+      font-size: 11px;
+      font-weight: 650;
+    }
+
+    .status-select[data-status="Finished"] {
+      border-color: #d8e8d9;
+      color: #356746;
+      background: #edf5ed;
+    }
+
+    .status-select[data-status="Reading"] {
+      border-color: #eee1c7;
+      color: #86632e;
+      background: #fbf5e9;
+    }
+
+    .delete-button {
+      display: grid;
+      width: 32px;
+      height: 32px;
+      flex: 0 0 auto;
+      place-items: center;
+      border: 0;
+      border-radius: 8px;
+      color: #92958d;
+      background: transparent;
+    }
+
+    .delete-button:hover { color: #a6473b; background: #fbefed; }
+
+    .empty-state {
+      padding: 48px 20px;
+      border: 1px dashed #d9dbd2;
+      border-radius: 14px;
+      text-align: center;
+    }
+
+    .empty-icon {
+      display: grid;
+      width: 48px;
+      height: 48px;
+      place-items: center;
+      margin: 0 auto 13px;
+      border-radius: 15px;
+      color: var(--green);
+      background: var(--green-soft);
+    }
+
+    .empty-state h3 {
+      margin: 0 0 6px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 18px;
+      font-weight: 600;
+    }
+
+    .empty-state p {
+      max-width: 280px;
+      margin: 0 auto;
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.6;
+    }
+
+    .footer-note {
+      margin: 26px 0 0;
+      color: #969a91;
+      font-size: 11px;
+      text-align: center;
+    }
+
+    .sr-only {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      clip-path: inset(50%);
+    }
+
+    @keyframes arrive {
+      from { opacity: 0; transform: translateY(5px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 760px) {
+      .page-shell { width: min(620px, calc(100% - 36px)); padding-top: 24px; }
+      .topbar { margin-bottom: 42px; }
+      .dashboard { grid-template-columns: 1fr; gap: 30px; }
+      .add-panel { padding: 22px; }
+    }
+
+    @media (max-width: 440px) {
+      .page-shell { width: calc(100% - 28px); }
+      .top-note { font-size: 11px; }
+      .topbar { margin-bottom: 36px; }
+      .stats { gap: 7px; }
+      .stat { min-height: 69px; padding: 13px 11px; }
+      .stat-value { font-size: 21px; }
+      .stat-label { font-size: 10px; }
+      .book-card { gap: 10px; padding: 12px 10px; }
+      .book-cover { width: 38px; height: 49px; }
+      .book-title { font-size: 14px; }
+      .book-actions { gap: 3px; }
+      .status-select { max-width: 103px; padding-left: 6px; font-size: 10px; }
+      .delete-button { width: 29px; height: 30px; }
+      .list-toolbar { gap: 10px; }
+      .list-heading { font-size: 19px; }
+      .search-box { width: 52%; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page-shell">
+    <header class="topbar">
+      <a class="brand" href="#" aria-label="Little Library home">
+        <span class="brand-mark" aria-hidden="true">
+          <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 7v13M12 7C9.5 4.5 6 4.5 3 5v13c3-.5 6.5-.5 9 2m0-13c2.5-2.5 6-2.5 9-2v13c-3-.5-6.5-.5-9 2"/>
+          </svg>
+        </span>
+        Little Library
+      </a>
+      <span class="top-note">A quiet corner for your next read</span>
+    </header>
+
+    <main>
+      <section class="intro" aria-labelledby="page-title">
+        <p class="eyebrow">Your reading life, gathered</p>
+        <h1 id="page-title">A shelf of your own.</h1>
+        <p class="subtitle">Keep the books you love close, and the ones you can't wait to read closer.</p>
+      </section>
+
+      <div class="dashboard">
+        <section class="panel add-panel" aria-labelledby="add-heading">
+          <h2 class="panel-heading" id="add-heading">
+            <span class="heading-icon" aria-hidden="true">
+              <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                <path d="M10 4v12M4 10h12"/>
+              </svg>
+            </span>
+            Add a book
+          </h2>
+          <form id="book-form" novalidate>
+            <div class="field">
+              <label for="title">Book title</label>
+              <input id="title" name="title" type="text" placeholder="e.g. The Midnight Library" autocomplete="off" required aria-describedby="title-error">
+              <p class="error" id="title-error" aria-live="polite"></p>
+            </div>
+            <div class="field">
+              <label for="author">Author</label>
+              <input id="author" name="author" type="text" placeholder="e.g. Matt Haig" autocomplete="off" required aria-describedby="author-error">
+              <p class="error" id="author-error" aria-live="polite"></p>
+            </div>
+            <div class="field">
+              <label for="status">Reading status</label>
+              <select id="status" name="status">
+                <option>To read</option>
+                <option>Reading</option>
+                <option>Finished</option>
+              </select>
+            </div>
+            <button class="add-button" type="submit">
+              <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true">
+                <path d="M10 4v12M4 10h12"/>
+              </svg>
+              Add to my shelf
+            </button>
+          </form>
+        </section>
+
+        <section class="library" aria-labelledby="shelf-heading">
+          <div class="stats" aria-label="Book counts">
+            <div class="stat"><span class="stat-value" id="count-total">0</span><span class="stat-label">On your shelf</span></div>
+            <div class="stat"><span class="stat-value" id="count-reading">0</span><span class="stat-label">In progress</span></div>
+            <div class="stat"><span class="stat-value" id="count-finished">0</span><span class="stat-label">Finished</span></div>
+          </div>
+          <div class="list-toolbar">
+            <h2 class="list-heading" id="shelf-heading">Your shelf <span id="shelf-count" class="sr-only"></span></h2>
+            <label class="search-box">
+              <svg viewBox="0 0 20 20" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" aria-hidden="true">
+                <circle cx="8.8" cy="8.8" r="5.8"/><path d="m13.2 13.2 4 4"/>
+              </svg>
+              <span class="sr-only">Search by title or author</span>
+              <input id="search" type="search" placeholder="Find a book..." autocomplete="off">
+            </label>
+          </div>
+          <div id="book-list" class="book-list" aria-live="polite"></div>
+          <p class="footer-note">Your shelf is saved right here in this browser.</p>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    (() => {
+      const STORAGE_KEY = "little-library-books";
+      const statuses = ["To read", "Reading", "Finished"];
+      const coverColors = ["#617a65", "#9a7661", "#6d7f96", "#a17e88", "#8a875c", "#627f82"];
+      const form = document.querySelector("#book-form");
+      const titleInput = document.querySelector("#title");
+      const authorInput = document.querySelector("#author");
+      const statusInput = document.querySelector("#status");
+      const searchInput = document.querySelector("#search");
+      const list = document.querySelector("#book-list");
+      const errors = {
+        title: document.querySelector("#title-error"),
+        author: document.querySelector("#author-error")
+      };
+      let books = loadBooks();
+
+      function loadBooks() {
+        try {
+          const storedBooks = localStorage.getItem(STORAGE_KEY);
+          if (storedBooks === null) {
+            const starterBooks = [
+              { id: "starter-1", title: "Aadujeevitham", author: "Benyamin", status: "To read", createdAt: 5 },
+              { id: "starter-2", title: "The Midnight Library", author: "Matt Haig", status: "Reading", createdAt: 4 },
+              { id: "starter-3", title: "Pride and Prejudice", author: "Jane Austen", status: "Finished", createdAt: 3 },
+              { id: "starter-4", title: "The Namesake", author: "Jhumpa Lahiri", status: "To read", createdAt: 2 },
+              { id: "starter-5", title: "The Alchemist", author: "Paulo Coelho", status: "Finished", createdAt: 1 }
+            ];
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(starterBooks));
+            return starterBooks;
+          }
+          const saved = JSON.parse(storedBooks);
+          if (!Array.isArray(saved)) return [];
+          return saved.filter(book =>
+            book &&
+            typeof book.id === "string" &&
+            typeof book.title === "string" &&
+            typeof book.author === "string" &&
+            statuses.includes(book.status) &&
+            Number.isFinite(book.createdAt)
+          );
+        } catch (error) {
+          console.error("Could not load saved books.", error);
+          return [];
+        }
+      }
+
+      function saveBooks() {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(books));
+        } catch (error) {
+          console.error("Could not save books to local storage.", error);
+          window.alert("Your changes could not be saved in this browser. Check that local storage is available.");
+        }
+      }
+
+      function makeBookCard(book, index) {
+        const card = document.createElement("article");
+        card.className = "book-card";
+        card.style.setProperty("--cover", coverColors[index % coverColors.length]);
+
+        const cover = document.createElement("div");
+        cover.className = "book-cover";
+        cover.setAttribute("aria-hidden", "true");
+        cover.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v13M12 7C9.5 4.5 6 4.5 3 5v13c3-.5 6.5-.5 9 2m0-13c2.5-2.5 6-2.5 9-2v13c-3-.5-6.5-.5-9 2"/></svg>';
+
+        const info = document.createElement("div");
+        info.className = "book-info";
+        const title = document.createElement("h3");
+        title.className = "book-title";
+        title.textContent = book.title;
+        const author = document.createElement("p");
+        author.className = "book-author";
+        author.textContent = `by ${book.author}`;
+        info.append(title, author);
+
+        const actions = document.createElement("div");
+        actions.className = "book-actions";
+        const status = document.createElement("select");
+        status.className = "status-select";
+        status.setAttribute("aria-label", `Status for ${book.title}`);
+        status.dataset.status = book.status;
+        statuses.forEach(value => {
+          const option = document.createElement("option");
+          option.value = value;
+          option.textContent = value;
+          option.selected = value === book.status;
+          status.append(option);
+        });
+        status.addEventListener("change", () => {
+          book.status = status.value;
+          status.dataset.status = book.status;
+          saveBooks();
+          updateCounts();
+        });
+
+        const remove = document.createElement("button");
+        remove.className = "delete-button";
+        remove.type = "button";
+        remove.setAttribute("aria-label", `Remove ${book.title}`);
+        remove.innerHTML = '<svg viewBox="0 0 20 20" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h12M8 6V4h4v2m3 0-.7 10H5.7L5 6m3 3v4m4-4v4"/></svg>';
+        remove.addEventListener("click", () => {
+          books = books.filter(item => item.id !== book.id);
+          saveBooks();
+          render();
+        });
+
+        actions.append(status, remove);
+        card.append(cover, info, actions);
+        return card;
+      }
+
+      function updateCounts() {
+        document.querySelector("#count-total").textContent = books.length;
+        document.querySelector("#count-reading").textContent = books.filter(book => book.status === "Reading").length;
+        document.querySelector("#count-finished").textContent = books.filter(book => book.status === "Finished").length;
+      }
+
+      function render() {
+        const query = searchInput.value.trim().toLocaleLowerCase();
+        const visibleBooks = [...books]
+          .sort((a, b) => b.createdAt - a.createdAt)
+          .filter(book => `${book.title} ${book.author}`.toLocaleLowerCase().includes(query));
+
+        list.replaceChildren();
+        if (visibleBooks.length === 0) {
+          const empty = document.createElement("div");
+          empty.className = "empty-state";
+          const icon = document.createElement("div");
+          icon.className = "empty-icon";
+          icon.setAttribute("aria-hidden", "true");
+          icon.innerHTML = '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v13M12 7C9.5 4.5 6 4.5 3 5v13c3-.5 6.5-.5 9 2m0-13c2.5-2.5 6-2.5 9-2v13c-3-.5-6.5-.5-9 2"/></svg>';
+          const heading = document.createElement("h3");
+          const description = document.createElement("p");
+          if (query) {
+            heading.textContent = "No books found";
+            description.textContent = "Try another title or author, or add this book to your shelf.";
+          } else {
+            heading.textContent = "Your shelf is waiting";
+            description.textContent = "Add a book you'd love to read. Your next favorite might be just around the corner.";
+          }
+          empty.append(icon, heading, description);
+          list.append(empty);
+        } else {
+          visibleBooks.forEach((book, index) => list.append(makeBookCard(book, index)));
+        }
+        updateCounts();
+      }
+
+      function setError(input, message) {
+        const error = errors[input.name];
+        error.textContent = message;
+        input.setAttribute("aria-invalid", message ? "true" : "false");
+      }
+
+      [titleInput, authorInput].forEach(input => {
+        input.addEventListener("input", () => {
+          if (input.value.trim()) setError(input, "");
+        });
+      });
+
+      form.addEventListener("submit", event => {
+        event.preventDefault();
+        const title = titleInput.value.trim();
+        const author = authorInput.value.trim();
+        setError(titleInput, title ? "" : "Please enter a title");
+        setError(authorInput, author ? "" : "Please enter an author");
+        if (!title || !author) {
+          (title ? authorInput : titleInput).focus();
+          return;
+        }
+
+        const createdAt = books.reduce(
+          (latest, book) => Math.max(latest, book.createdAt + 1),
+          Date.now()
+        );
+        books.push({
+          id: `${Date.now()}-${Math.random().toString(36).slice(2)}`,
+          title,
+          author,
+          status: statusInput.value,
+          createdAt
+        });
+        saveBooks();
+        form.reset();
+        setError(titleInput, "");
+        setError(authorInput, "");
+        render();
+        titleInput.focus();
+      });
+
+      searchInput.addEventListener("input", render);
+      render();
+    })();
+  </script>
+</body>
+</html>
