@@ -32,4 +32,4 @@ This log records the prompts and checks used while building the Book Tracker. Th
 - A very long title displayed in a narrow browser viewport without horizontal page overflow.
 - Status changes and book data persisted after reloading the page.
 - Two quickly added books appeared newest first before and after reload.
-- Temporary test books were removed after testing.
+- Temporary books created during the final verification were removed afterward.
